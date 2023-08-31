@@ -1,5 +1,6 @@
 package ru.netology;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterEach;
@@ -23,6 +24,7 @@ public class CardFormTest {
         options = new ChromeOptions();
         options.addArguments("--headless");
         System.setProperty("webdriver.chrome.driver", "driver/linux/chromedriver");
+        WebDriverManager.chromedriver().setup();
     }
 
     @BeforeEach
@@ -40,12 +42,45 @@ public class CardFormTest {
     void testPositiveAllInput() {
         driver.get("http://localhost:9999");
         List<WebElement> elements = driver.findElements(By.className("input__control"));
-        elements.get(0).sendKeys("Дмитрий Евдокимов");
-        elements.get(1).sendKeys("+79270000000");
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Иван Петров-Иванов");
+        elements.get(1).sendKeys("+79512852525");
         driver.findElement(By.className("checkbox__box")).click();
         driver.findElement(By.className("button")).click();
         String text = driver.findElement(By.cssSelector("[data-test-id=order-success]")).getText();
         assertEquals("Ваша заявка успешно отправлена! Наш менеджер свяжется с вами в ближайшее время.", text.trim());
     }
-}
 
+    @Test
+    void testNegativeNameEmpty() {
+        driver.get("http://localhost:9999");
+        List<WebElement> elements = driver.findElements(By.className("input__control"));
+        elements.get(1).sendKeys("+79512852525");
+        driver.findElement(By.className("checkbox__box")).click();
+        driver.findElement(By.className("button")).click();
+        String text = driver.findElement(By.className("input__sub")).getText();
+        assertEquals("Поле обязательно для заполнения", text.trim());
+    }
+
+    @Test
+    void testNegativePhoneEmpty() {
+        driver.get("http://localhost:9999");
+        List<WebElement> elements = driver.findElements(By.className("input__control"));
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Иван Петров-Иванов");
+        driver.findElement(By.className("checkbox__box")).click();
+        driver.findElement(By.className("button")).click();
+        String text = driver.findElement(By.cssSelector("[data-test-id=phone] span.input__sub")).getText();
+        assertEquals("Поле обязательно для заполнения", text.trim());
+    }
+
+    @Test
+    void testNegativeAgreementEmpty() {
+        driver.get("http://localhost:9999");
+        List<WebElement> elements = driver.findElements(By.className("input__control"));
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Иван Петров-Иванов");
+        elements.get(1).sendKeys("+79512852525");
+        driver.findElement(By.className("button")).click();
+//        String text = driver.findElement(By.className("checkbox__text")).getCssValue("Color");
+        String text = driver.findElement(By.cssSelector("[data-test-id=agreement].input_invalid")).getText();
+        assertEquals("Я соглашаюсь с условиями обработки и использования моих персональных данных и разрешаю сделать запрос в бюро кредитных историй", text.trim());
+    }
+}
